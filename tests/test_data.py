@@ -5,6 +5,6 @@ def test_database_connection():
     assert db.connect() is not None
 
 def test_get_player_match_stats():
-    db = FootballDatabase('data/raw/football_data.sqlite')
+    db = FootballDatabase('data/raw/master.db')
     stats = db.get_player_match_stats()
     assert not stats.empty
