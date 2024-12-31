@@ -1,10 +1,19 @@
 # .gitignore
 __pycache__/
+
+# File types
 *.py[cod]
 *.sqlite
 *.csv
 *.joblib
-mlruns/
-venv/
-.ipynb_checkpoints/
+*.pkl
 *.db
+.DS_Store
+
+# Directories
+__pycache__/
+venv/
+mlruns/
+footml.egg-info/
+experiments/
+.ipynb_checkpoints/
