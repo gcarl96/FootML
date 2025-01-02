@@ -20,7 +20,6 @@ def combine_odds_data(config: Config):
     
     # Read and process each CSV file
     for file in odds_files:
-        print(file)
         df = pd.read_csv(f'{config.file_config.odds_path}/{file}')
         
         # Map division codes if present in the dataframe
@@ -36,4 +35,15 @@ def combine_odds_data(config: Config):
 
     combined_df['date'] = pd.to_datetime(combined_df['date'], format='mixed', dayfirst=True)
 
+    name_mapping = pd.read_csv("data/processed/odds_team_name_mapping.csv").set_index('match_name')['odds_name'].to_dict()
+
+    combined_df['home_team'] = combined_df['home_team'].apply(lambda x: name_mapping[x] if x in name_mapping.keys() else x)
+    combined_df['away_team'] = combined_df['away_team'].apply(lambda x: name_mapping[x] if x in name_mapping.keys() else x)
+
     return combined_df
+
+if __name__ == '__main__':
+    config = Config()
+    odds_data = combine_odds_data(config)
+
+    odds_data.to_csv(config.file_config.odds_output_path, index=False)

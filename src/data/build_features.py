@@ -3,6 +3,7 @@ from src.utils.config import Config
 from src.data.player_data import get_player_data
 from src.data.match_data import get_match_data
 from src.data.process_odds import combine_odds_data
+
 def rolling_player_stats(player_stats: pd.DataFrame, config: Config):
     # Create a copy of player stats to join with itself
     rolling_player_stats = player_stats.merge(
@@ -17,7 +18,7 @@ def rolling_player_stats(player_stats: pd.DataFrame, config: Config):
     # Filter to only include prior games within 10 gameweeks
     rolling_player_stats = rolling_player_stats[
         (rolling_player_stats['gameweek_prior'] < rolling_player_stats['gameweek']) & 
-        (rolling_player_stats['gameweek'] - rolling_player_stats['gameweek_prior'] <= config.feature_config.rolling_gameweeks)
+        (rolling_player_stats['gameweek'] - rolling_player_stats['gameweek_prior'] <= config.data_config.rolling_gameweeks)
     ]
 
     # Calculate rolling averages for each player's stats
@@ -71,7 +72,7 @@ def rolling_team_stats(match_data: pd.DataFrame, config: Config):
         team_gameweek_stats[f'rolling_{stat}'] = (team_gameweek_stats
             .sort_values('gameweek')
             .groupby('team_name')[stat]
-            .transform(lambda x: x.rolling(window=config.feature_config.rolling_gameweeks, min_periods=1).mean().shift(1))
+            .transform(lambda x: x.rolling(window=config.data_config.rolling_gameweeks, min_periods=1).mean().shift(1))
         )
 
     match_data_with_priors = pd.merge(match_data, team_gameweek_stats[['team_name', 'gameweek', 'rolling_goals', 'rolling_xg']]
@@ -152,11 +153,16 @@ def build_features(config: Config):
     merged_features = merge_features(team_stats, player_stats, config)
 
     features_with_odds = merge_odds(merged_features, config)
+
+    # Fill NaN values in feature columns
+    features_with_odds[config.data_config.feature_list] = features_with_odds[config.data_config.feature_list].fillna(0)
     
     return features_with_odds
 
 if __name__ == '__main__':
     config = Config()
     features = build_features(config)
+
+    features.to_csv(config.file_config.input_features_path, index=False)
         
     print(features[(features["home_team"] == "Arsenal") | (features["away_team"] == "Arsenal")].sort_values(by='date', ascending=False))

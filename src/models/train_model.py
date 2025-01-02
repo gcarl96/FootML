@@ -1,45 +1,43 @@
 import pandas as pd
-from sklearn.model_selection import train_test_split
+from src.utils.config import Config
+import xgboost as xgb
+from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, classification_report
-import mlflow
-import mlflow.sklearn
-import os
+from sklearn.preprocessing import StandardScaler
 
-def train_model():
-    data_path = 'data/processed/cleaned_football_data.csv'
-    mlflow.set_experiment("football_score_prediction")
-    # Load data
-    data = pd.read_csv(data_path)
+def preprocess_data(train_df, test_df, config: Config):
+    # Preprocess data
+    train_inputs = train_df[config.data_config.feature_list]
+    test_inputs = test_df[config.data_config.feature_list]
 
+    # Standardize data
+    if config.model_config.model_name == 'logistic_regression':
+        scaler = StandardScaler()
+        train_inputs = scaler.fit_transform(train_inputs)
+        test_inputs = scaler.transform(test_inputs)
 
-    print(data.head())
+    return train_inputs, test_inputs
 
-    # Prepare features and target
-    X = data[['shots', 'shots_on_target']]
-    y = data['result'].astype(int)
+def train_model(train_df, test_df, config: Config):
+    train_inputs, test_inputs = preprocess_data(train_df, test_df, config)
+    train_target = train_df[config.data_config.target_column]
 
-    # Split the data
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-    with mlflow.start_run():
-        model = RandomForestClassifier(n_estimators=100, random_state=42)
-        model.fit(X_train, y_train)
-
-        # Evaluate the model
-        y_pred = model.predict(X_test)
-        accuracy = accuracy_score(y_test, y_pred)
+    # Train model
+    if config.model_config.model_name == 'logistic_regression':
+        model = LogisticRegression(random_state=config.model_config.random_state)
+        model.fit(train_inputs, train_target)
         
-        # Log parameters and metrics
-        mlflow.log_param("n_estimators", 100)
-        mlflow.log_metric("accuracy", accuracy)
-        
-        # Log the model
-        mlflow.sklearn.log_model(model, "model")
+    elif config.model_config.model_name == 'xgboost':
+        model = xgb.XGBClassifier(random_state=config.model_config.random_state)
+        model.fit(train_inputs, train_target)
 
-        print(f"Model Accuracy: {accuracy}")
-        print(classification_report(y_test, y_pred))
+    # Make predictions
+    test_pred_proba = model.predict_proba(test_inputs)
+
+    return model, test_pred_proba
+
 
 if __name__ == '__main__':
-    train_model()
+    config = Config()
+    train_model(config)
 
