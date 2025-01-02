@@ -26,6 +26,9 @@ def run_experiment(config: Config):
     # Evaluate model
     evaluation_results = evaluate_model(test_df, test_predictions, config, experiment_dir)
 
+    test_df.loc[:, 'Pred_Prob'] = test_predictions[:, 1]
+    test_df.to_csv(os.path.join(experiment_dir, 'predictions.csv'), index=False)
+
     # Save model and results
     results = {
         "model_parameters": config.model_config.__dict__,

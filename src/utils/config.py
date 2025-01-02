@@ -49,9 +49,15 @@ class ModelConfig:
     # Logistic Regression
     random_state: int = 42
 
+@dataclass
+class BettingSimulationConfig:
+    starting_bankroll: float = 1000
+    max_kelly_fraction: float = 0.25
+
 
 @dataclass
 class Config:
     file_config: FileConfig = field(default_factory=FileConfig)
     data_config: DataConfig = field(default_factory=DataConfig)
     model_config: ModelConfig = field(default_factory=ModelConfig)
+    betting_simulation_config: BettingSimulationConfig = field(default_factory=BettingSimulationConfig)
