@@ -8,7 +8,7 @@ __pycache__/
 *.joblib
 *.pkl
 *.db
-*.DS_Store
+.DS_Store
 
 # Directories
 __pycache__/
